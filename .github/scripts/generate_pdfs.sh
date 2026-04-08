@@ -7,44 +7,73 @@ set -e
 TARGET_FOLDER="${TARGET_FOLDER:-workspace}"
 OUTPUT_DIR="output_pdfs"
 
+# Reference directory for standard C2000 files (Using forward slashes for Linux)
+C2000WARE_DIR="./C2000Ware_4_01_00_00/device_support/f2837xd/examples/cpu1"
+
 mkdir -p "$OUTPUT_DIR"
 
-# Find .c files exactly one subfolder deep (e.g., workspace/*/*.c)
+# Find .c files exactly 3 subfolders deep
 find "$TARGET_FOLDER" -mindepth 3 -maxdepth 3 -type f -name "*.c" | while read -r file; do
-  if grep -q -P '\bmain\s*\(' "$file"; then
-    echo "Converting: $file"
+  
+  # Get just the filename (e.g., "main.c" or "F28379dSerial.c")
+  filename=$(basename "$file")
+  generate_pdf=false
+
+  # CONDITION 1: Is it the Serial library file?
+  if [[ "$filename" == "F28379dSerial.c" ]]; then
+    match_found=false
     
-    # Extract just the filename without the path and extension
-    base_name=$(basename "$file" .c)
+    # Enable nullglob so the loop doesn't fail if the C2000Ware path doesn't exist
+    shopt -s nullglob
+    for ref_file in "$C2000WARE_DIR"/*/cpu01/F28379dSerial.c; do
+      
+      # 'cmp -s' operates silently and returns 0 if files are perfectly identical
+      if cmp -s "$file" "$ref_file"; then
+        match_found=true
+        break # We found an exact match, no need to keep checking
+      fi
+    done
+    shopt -u nullglob # Disable nullglob
+
+    # If no exact match was found, we want to compile it
+    if [ "$match_found" = false ]; then
+      generate_pdf=true
+      echo "Converting: Found custom/modified $filename in $file"
+    else
+      echo "Skipping: Exact C2000Ware match found for $file"
+    fi
+
+  # CONDITION 2: Does it contain a main function?
+  elif grep -q -P '\bmain\s*\(' "$file"; then
+    generate_pdf=true
+    echo "Converting: Found main function in $file"
+  fi
+
+  # If either condition above was met, generate the PDF
+  if [ "$generate_pdf" = true ]; then
     
-    # Generate HTML and convert to PDF
+    rel_path="${file#"$TARGET_FOLDER"/}" 
+    project_name=$(echo "$rel_path" | cut -d'/' -f1)
+    
+    # 2. Strip the .c extension
+    base_name="${filename%.c}"
+    
+    # 3. Create a clean, unique name: ProjectName_filename.pdf
+    pdf_filename="${project_name}_${base_name}.pdf"
+    
+    # Generate HTML
     pygmentize -f html -O full,style=default,linenos=1 -l c -o temp.html "$file"
 
-  # INJECT CODE COMPOSER STUDIO THEME
-    # We use sed to replace the closing </style> tag with our custom CSS block
-    # sed -i 's|</style>|\
-    #   /* Keywords (int, void, if, return) */\
-    #   .k, .kt { color: #7F0055 !important; font-weight: bold !important; }\
-    #   /* Strings ("Hello World") and Preprocessor Files (<stdio.h>) */\
-    #   .s, .s2, .se, .cpf { color: #2A00FF !important; font-weight: normal !important; }\
-    #   /* Comments (// and /* */) */\
-    #   .c, .c1, .cm { color: #3F7F5F !important; font-style: normal !important; }\
-    #   /* Preprocessor Directives (#define, #pragma) */\
-    #   .cp { color: #708090 !important; font-weight: bold !important; }\
-    #   /* Numbers (Integers, Floats, Hex, Octal, etc.) */\
-    #   .m, .mb, .mf, .mh, .mi, .mo, .il { color: #0000FF !important; font-weight: normal !important; }\
-    # </style>|' temp.html
-
-  # INJECT CODE COMPOSER STUDIO THEME (Now with Blue Numbers)
-    # We use sed to replace the closing </style> tag with our custom CSS block
+    # INJECT CODE COMPOSER STUDIO THEME (Now with Blue Numbers)
     sed -i 's|</style>|\
       /* Numbers (Integers, Floats, Hex, Octal, etc.) */\
       .m, .mb, .mf, .mh, .mi, .mo, .il { color: #2A00FF !important; font-weight: normal !important; }\
     </style>|' temp.html
 
-    wkhtmltopdf --enable-local-file-access temp.html "$OUTPUT_DIR/${base_name}.pdf"
+    # Convert to PDF using the new unique filename
+    wkhtmltopdf --enable-local-file-access temp.html "$OUTPUT_DIR/$pdf_filename"
     
-    echo "Created: $OUTPUT_DIR/${base_name}.pdf"
+    echo "Created: $OUTPUT_DIR/$pdf_filename"
   fi
 done
 
