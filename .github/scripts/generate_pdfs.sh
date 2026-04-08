@@ -10,6 +10,15 @@ OUTPUT_DIR="output_pdfs"
 # Reference directory for standard C2000 files
 C2000WARE_DIR="./C2000Ware_4_01_00_00/device_support/f2837xd/examples/cpu1"
 
+# --- GENERIC TEMPLATE LIST ---
+# Add any files here that should be checked against the C2000Ware folder
+# Separate file names with spaces
+TEMPLATE_FILES=(
+  "F28379dSerial.c"
+  # "AnotherStandardFile.c"
+  # "F2837xD_DefaultISR.c"
+)
+
 mkdir -p "$OUTPUT_DIR"
 
 # 1. Find all unique directories that contain .c files at the specified depth
@@ -23,9 +32,9 @@ find "$TARGET_FOLDER" -mindepth 3 -maxdepth 3 -type f -name "*.c" -exec dirname 
   
   # Initialize variables to control the exact merge order
   main_pdf=""
-  serial_pdf=""
+  template_pdfs=()
   other_pdfs=()
-  all_temp_pdfs=() # Used strictly for cleanup later
+  all_temp_pdfs=()
 
   # Enable nullglob so the loop operates safely
   shopt -s nullglob
@@ -35,10 +44,25 @@ find "$TARGET_FOLDER" -mindepth 3 -maxdepth 3 -type f -name "*.c" -exec dirname 
     filename=$(basename "$file")
     generate_pdf=false
 
-    # CONDITION 1: Is it the Serial library file?
-    if [[ "$filename" == "F28379dSerial.c" ]]; then
+    # Check if the file has a main function
+    is_main=false
+    if grep -q -P '\bmain\s*\(' "$file"; then
+      is_main=true
+    fi
+
+    # Check if the file is in our template list
+    is_template=false
+    for tmpl in "${TEMPLATE_FILES[@]}"; do
+      if [[ "$filename" == "$tmpl" ]]; then
+        is_template=true
+        break
+      fi
+    done
+
+    # CONDITION 1: Is it in the Template list?
+    if [ "$is_template" = true ]; then
       match_found=false
-      for ref_file in "$C2000WARE_DIR"/*/cpu01/F28379dSerial.c; do
+      for ref_file in "$C2000WARE_DIR"/*/cpu01/"$filename"; do
         if cmp -s "$file" "$ref_file"; then
           match_found=true
           break
@@ -47,13 +71,13 @@ find "$TARGET_FOLDER" -mindepth 3 -maxdepth 3 -type f -name "*.c" -exec dirname 
 
       if [ "$match_found" = false ]; then
         generate_pdf=true
-        echo "  -> Including custom $filename"
+        echo "  -> Including custom/modified $filename"
       else
         echo "  -> Skipping default C2000Ware $filename"
       fi
 
     # CONDITION 2: Does it contain a main function?
-    elif grep -q -P '\bmain\s*\(' "$file"; then
+    elif [ "$is_main" = true ]; then
       generate_pdf=true
       echo "  -> Including $filename (contains main)"
     fi
@@ -79,10 +103,10 @@ find "$TARGET_FOLDER" -mindepth 3 -maxdepth 3 -type f -name "*.c" -exec dirname 
 
       # --- ORDERING LOGIC ---
       # Sort the generated PDF into the correct variable/array
-      if [[ "$filename" == "F28379dSerial.c" ]]; then
-        serial_pdf="$temp_pdf"
-      elif grep -q -P '\bmain\s*\(' "$file"; then
+      if [ "$is_main" = true ]; then
         main_pdf="$temp_pdf"
+      elif [ "$is_template" = true ]; then
+        template_pdfs+=("$temp_pdf")
       else
         other_pdfs+=("$temp_pdf")
       fi
@@ -100,8 +124,8 @@ find "$TARGET_FOLDER" -mindepth 3 -maxdepth 3 -type f -name "*.c" -exec dirname 
   # 4. Assemble the final PDF array in the exact requested order
   ordered_pdfs=()
   if [ -n "$main_pdf" ]; then ordered_pdfs+=("$main_pdf"); fi
-  if [ -n "$serial_pdf" ]; then ordered_pdfs+=("$serial_pdf"); fi
-  ordered_pdfs+=("${other_pdfs[@]}") # Appends any other files, just in case
+  ordered_pdfs+=("${template_pdfs[@]}")
+  ordered_pdfs+=("${other_pdfs[@]}")
 
   # 5. If we generated PDFs, stitch them together using qpdf
   if [ ${#ordered_pdfs[@]} -gt 0 ]; then
@@ -110,7 +134,7 @@ find "$TARGET_FOLDER" -mindepth 3 -maxdepth 3 -type f -name "*.c" -exec dirname 
     # Merge all individual PDFs into the final output file
     qpdf --empty --pages "${ordered_pdfs[@]}" -- "$OUTPUT_DIR/$pdf_filename"
     
-    echo "Successfully created combined PDF: $OUTPUT_DIR/$pdf_filename (Order: Main -> Serial)"
+    echo "Successfully created combined PDF: $OUTPUT_DIR/$pdf_filename"
     
     # Clean up the temporary single-page PDFs
     rm -f "${all_temp_pdfs[@]}"
