@@ -22,7 +22,7 @@ TEMPLATE_FILES=(
 mkdir -p "$OUTPUT_DIR"
 
 # 1. Find all unique directories that contain .c files at the specified depth
-find "$TARGET_FOLDER" -mindepth 3 -maxdepth 3 -type f -name "*.c" -exec dirname {} \; | sort -u | while read -r dir; do
+find "$TARGET_FOLDER" -mindepth 2 -maxdepth 3 -type f -name "*.c" -exec dirname {} \; | sort -u | while read -r dir; do
   
   # Extract the project folder name (e.g., "ProjectA")
   rel_path="${dir#"$TARGET_FOLDER"/}" 
