@@ -1335,11 +1335,11 @@ __interrupt void SWI3_LowestPriority(void)     // FLASH_CORRECTABLE_ERROR
     __asm("  NOP");
     EINT;
     RCangle = readEncWheel(); //Lab RC servo exercise uses encoder angle as the command input for servo motion - DS
-    setEPWM3A_RCServo(RCangle); //RCangle is a value from -90 to 90
-    setEPWM3B_RCServo(RCangle); //RCangle is a value from -90 to 90
-    setEPWM5A_RCServo(RCangle); //RCangle is a value from -90 to 90 in use
-    setEPWM5B_RCServo(RCangle); //RCangle is a value from -90 to 90 in use
-    setEPWM6A_RCServo(RCangle); //RCangle is a value from -90 to 90 in use
+//    setEPWM3A_RCServo(RCangle); //RCangle is a value from -90 to 90
+//    setEPWM3B_RCServo(RCangle); //RCangle is a value from -90 to 90
+//    setEPWM5A_RCServo(RCangle); //RCangle is a value from -90 to 90 in use
+    setEPWM5B_RCServo(RCangle); //RCangle is a value from -90 to 90 in use - Tongue
+    setEPWM6A_RCServo(RCangle); //RCangle is a value from -90 to 90 in use - Gate
     //###############################################################################################
     // Insert SWI ISR Code here.......
 
