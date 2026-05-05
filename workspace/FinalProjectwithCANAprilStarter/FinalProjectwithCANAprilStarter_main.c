@@ -186,6 +186,13 @@ float foward_velocity = 1.0;
 float left_turn_Start_threshold = 1.3;
 float turn_saturation = 2.5;
 
+//RC Servo
+float Gate_O = -67.74;
+float Gate_C = 0.40;
+float RTong = -49.34; //KLEC: ball goes to the left
+float MTong =  -11.49;
+float LTong = 1.47; //KLEC: ball goes to the right
+
 float x_pred[3][1] = {{0},{0},{0}};                 // predicted state
 
 //more kalman vars
@@ -479,7 +486,7 @@ void main(void)
     robotdest[5].x = 4;     robotdest[5].y = 2;
     robotdest[6].x = 4;     robotdest[6].y = 10;
     robotdest[7].x = 0;     robotdest[7].y = 9;
-// the two extra points that we added for the robot to go to after the initial course one in the middle of the field and one outside near the wall - ER
+    // the two extra points that we added for the robot to go to after the initial course one in the middle of the field and one outside near the wall - ER
     robotdest[8].x = 2;     robotdest[8].y = 5;
     robotdest[9].x = -2;    robotdest[9].y = -1;
 
@@ -608,12 +615,14 @@ void main(void)
         if (UARTPrint == 1 ) {
             //UART_printfLine(1,"RCangle:%.2f",RCangle);
             if (readbuttons() == 0) {
-                UART_printfLine(1,"RobotState: %d", RobotState);
+                //                UART_printfLine(1,"RobotState: %d", RobotState);
+                UART_printfLine(1,"O1A:%.0fC:%.0fR:%.0f",MaxAreaThreshold1,MaxColThreshold1,MaxRowThreshold1);
+                UART_printfLine(2,"P1A:%.0fC:%.0fR:%.0f",MaxAreaThreshold2,MaxColThreshold2,MaxRowThreshold2);
                 //                UART_printfLine(1,"x:%.2f:y:%.2f:a%.2f",ROBOTps.x,ROBOTps.y,ROBOTps.theta);
                 UART_printfLine(2,"orange: %.2f", robotToBall2);
             } else if (readbuttons() == 1) {
-                UART_printfLine(1,"O1A:%.0fC:%.0fR:%.0f",MaxAreaThreshold1,MaxColThreshold1,MaxRowThreshold1);
-                UART_printfLine(2,"P1A:%.0fC:%.0fR:%.0f",MaxAreaThreshold2,MaxColThreshold2,MaxRowThreshold2);
+                //                UART_printfLine(1,"O1A:%.0fC:%.0fR:%.0f",MaxAreaThreshold1,MaxColThreshold1,MaxRowThreshold1);
+                //                UART_printfLine(2,"P1A:%.0fC:%.0fR:%.0f",MaxAreaThreshold2,MaxColThreshold2,MaxRowThreshold2);
                 //UART_printfLine(1,"LV1:%.3f LV2:%.3f",printLV1,printLV2);
                 //UART_printfLine(2,"Ln1:%.3f Ln2:%.3f",printLinux1,printLinux2);
             } else if (readbuttons() == 2) {
@@ -895,7 +904,7 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
             MaxColThreshold1 = fromCAMvaluesThreshold1[1];
             MaxRowThreshold1 = fromCAMvaluesThreshold1[2];
 
-// using the calibration values and the line of best fit found from the distance of the green golf ball in relation to the real world, this equation calculates the distance the robot is from the green golf ball in relation to the robot - ER
+            // using the calibration values and the line of best fit found from the distance of the green golf ball in relation to the real world, this equation calculates the distance the robot is from the green golf ball in relation to the robot - ER
             robotToBall1 = -0.00002154*MaxRowThreshold1*MaxRowThreshold1*MaxRowThreshold1 + 0.006486*MaxRowThreshold1*MaxRowThreshold1 - 0.6728*MaxRowThreshold1 + 25.42;
 
             NextLargestAreaThreshold1 = fromCAMvaluesThreshold1[3];
@@ -917,7 +926,7 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
             MaxAreaThreshold2 = fromCAMvaluesThreshold2[0];
             MaxColThreshold2 = fromCAMvaluesThreshold2[1];
             MaxRowThreshold2 = fromCAMvaluesThreshold2[2];
-// using the calibration values and the line of best fit found from the distance of the green golf ball in relation to the real world, this equation calculates the distance the robot is from the green golf ball in relation to the robot - ER
+            // using the calibration values and the line of best fit found from the distance of the green golf ball in relation to the real world, this equation calculates the distance the robot is from the green golf ball in relation to the robot - ER
             robotToBall2 = -0.00002154*MaxRowThreshold2*MaxRowThreshold2*MaxRowThreshold2 + 0.006486*MaxRowThreshold2*MaxRowThreshold2 - 0.6728*MaxRowThreshold2 + 25.42;
 
             NextLargestAreaThreshold2 = fromCAMvaluesThreshold2[3];
@@ -1027,7 +1036,7 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
         // state machine
         colcentroid1 = MaxColThreshold1 - 80;
         colcentroid2 = MaxColThreshold2 - 80; // 80 is used as the center column of the camera, so a centered green or orange ball centered gives concentroid = 0 - DS
-switch (RobotState) {
+        switch (RobotState) {
         case 1: // command the robot to an X,Y point in the course - KL
             // vref and turn are the vref and turn returned from xy_control
             if (LADARfront < 1.2) {
@@ -1041,7 +1050,7 @@ switch (RobotState) {
             } else {
                 checkfronttally = 0;
             }
-// ensures that the robot does not move for 2 seconds after returning to state 1, so after is stops detecting a golf ball - ER
+            // ensures that the robot does not move for 2 seconds after returning to state 1, so after is stops detecting a golf ball - ER
             statecount++;
             if (statecount<=2000){
                 RobotState = 1;
@@ -1056,7 +1065,7 @@ switch (RobotState) {
                 }
             }
             break;
-        case 10: // wall following if an obstacle gets in the way of robot - KL
+        case 10: // right wall following if an obstacle gets in the way of robot - KL
             if (right_wall_follow_state == 1) {
                 //Left Turn
                 turn = Kp_front_wall*(14.5 - LADARfront);
@@ -1080,13 +1089,13 @@ switch (RobotState) {
             }
 
             WallFollowtime++;
-        // exit wall following if at least 5 seconds have passed and front path is clear - KL
+            // exit wall following if at least 5 seconds have passed and front path is clear - KL
             if ( (WallFollowtime > 5000) && (LADARfront > 1.5) ) {
                 RobotState = 1; //return to XY waypoint navigation - KL
                 checkfronttally = 0;
             }
             break;
-// this state sets vref and turn so that the robot moves towards a detected green golf ball and after 1 second of waiting, sends the robot to state 22 which stops the robot - ER
+            // this state sets vref and turn so that the robot moves towards a detected green golf ball and after 1 second of waiting, sends the robot to state 22 which stops the robot - ER
         case 20:
             // put vision code here
             if (MaxColThreshold1 == 0 || MaxAreaThreshold1 < 3){
@@ -1095,17 +1104,18 @@ switch (RobotState) {
             } else {
                 vref = 0.75;
                 turn = kpvision * (0 - colcentroid1);
-                if (MaxRowThreshold1 > 100){
+                if (MaxRowThreshold1 > 100){ //KLEC: row number for rb to know how to close it is to the ball, need to tune the number for enough clearance so that gate doesn't push ball away
                     RobotState = 22;
                     count = 0;
                 }
             }
             break;
-        case 22: // after no longer detecting the green golf ball, the robot stops moving - ER
+        case 22: // after no longer detecting the green golf ball, the robot stops moving - ER, lift arm and move tongue
             vref = 0;
             turn = 0;
+
             count++;
-            if (count>=1000){//after 1 second, robot drives forward - KL
+            if (count>=2000){//after 1 second, robot drives forward - KL
                 RobotState = 24;
                 count = 0;
             }
@@ -1113,8 +1123,10 @@ switch (RobotState) {
         case 24: // robot drives forward into the golf ball - KL
             vref = 0.5;
             turn = 0;
+            setEPWM5B_RCServo(LTong); //KLEC: move the tongue to the left side, green balls go to the right compartment
+            setEPWM6A_RCServo(Gate_O); //KLEC: open the gate
             count++;
-            if (count>=1000){
+            if (count>=3000){
                 RobotState = 26;
                 count = 0;
             }
@@ -1122,6 +1134,8 @@ switch (RobotState) {
         case 26: // robot pauses once ball is presumed to be captured - KL
             vref = 0;
             turn = 0;
+            setEPWM6A_RCServo(Gate_C);
+            setEPWM5B_RCServo(MTong);
             count++;
             if (count>=1000){ //after 1 second, robot returns to waypoint navigation - KL
                 RobotState = 1;
@@ -1133,13 +1147,13 @@ switch (RobotState) {
             // states for orange ball
         case 30:
             // put vision code here
-//saying that if the orange ball is not detected or doesn't fit in the area threshold, then to stop the robot - KP
-//this helps it not detect other orange objects in the room as the ball - KP
+            //saying that if the orange ball is not detected or doesn't fit in the area threshold, then to stop the robot - KP
+            //this helps it not detect other orange objects in the room as the ball - KP
             if (MaxColThreshold2 == 0 || MaxAreaThreshold2 < 3){
                 vref = 0;
                 turn = 0;
             } else {
-//tells it what to do if it is detected, move to state 32 - KP
+                //tells it what to do if it is detected, move to state 32 - KP
                 vref = 0.75;
                 turn = kpvision * (0 - colcentroid2);
                 if (MaxRowThreshold2 > 100){
@@ -1149,9 +1163,11 @@ switch (RobotState) {
             }
             break;
         case 32:
-//stopping and pausing with vref and turn at 0 - KP
+            //stopping and pausing with vref and turn at 0 - KP
             vref = 0;
             turn = 0;
+            setEPWM5B_RCServo(RTong); //KLEC: move the tongue to the right side, orange balls go to the left compartment
+            setEPWM6A_RCServo(Gate_O); //KLEC: open the gate
             count++;
             if (count>=1000){
                 RobotState = 34;
@@ -1159,7 +1175,7 @@ switch (RobotState) {
             }
             break;
         case 34:
-//telling robot to move forward then move to state 36 - KP
+            //telling robot to move forward then move to state 36 - KP
             vref = 0.5;
             turn = 0;
             count++;
@@ -1169,9 +1185,11 @@ switch (RobotState) {
             }
             break;
         case 36:
-//another stop before it begins the route again - KP
+            //another stop before it begins the route again - KP
             vref = 0;
             turn = 0;
+            setEPWM6A_RCServo(Gate_C);
+            setEPWM5B_RCServo(MTong);
             count++;
             if (count>=1000){
                 RobotState = 1;
@@ -1335,9 +1353,9 @@ __interrupt void SWI3_LowestPriority(void)     // FLASH_CORRECTABLE_ERROR
     __asm("  NOP");
     EINT;
     RCangle = readEncWheel(); //Lab RC servo exercise uses encoder angle as the command input for servo motion - DS
-//    setEPWM3A_RCServo(RCangle); //RCangle is a value from -90 to 90
-//    setEPWM3B_RCServo(RCangle); //RCangle is a value from -90 to 90
-//    setEPWM5A_RCServo(RCangle); //RCangle is a value from -90 to 90 in use
+    //    setEPWM3A_RCServo(RCangle); //RCangle is a value from -90 to 90
+    //    setEPWM3B_RCServo(RCangle); //RCangle is a value from -90 to 90
+    //    setEPWM5A_RCServo(RCangle); //RCangle is a value from -90 to 90 in use
     setEPWM5B_RCServo(RCangle); //RCangle is a value from -90 to 90 in use - Tongue
     setEPWM6A_RCServo(RCangle); //RCangle is a value from -90 to 90 in use - Gate
     //###############################################################################################
