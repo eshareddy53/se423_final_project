@@ -615,9 +615,9 @@ void main(void)
         if (UARTPrint == 1 ) {
             //UART_printfLine(1,"RCangle:%.2f",RCangle);
             if (readbuttons() == 0) {
-                //                UART_printfLine(1,"RobotState: %d", RobotState);
-                UART_printfLine(1,"O1A:%.0fC:%.0fR:%.0f",MaxAreaThreshold1,MaxColThreshold1,MaxRowThreshold1);
-                UART_printfLine(2,"P1A:%.0fC:%.0fR:%.0f",MaxAreaThreshold2,MaxColThreshold2,MaxRowThreshold2);
+                                UART_printfLine(1,"RobotState: %d", RobotState);
+//                UART_printfLine(1,"O1A:%.0fC:%.0fR:%.0f",MaxAreaThreshold1,MaxColThreshold1,MaxRowThreshold1);
+//                UART_printfLine(2,"P1A:%.0fC:%.0fR:%.0f",MaxAreaThreshold2,MaxColThreshold2,MaxRowThreshold2);
                 //                UART_printfLine(1,"x:%.2f:y:%.2f:a%.2f",ROBOTps.x,ROBOTps.y,ROBOTps.theta);
                 UART_printfLine(2,"orange: %.2f", robotToBall2);
             } else if (readbuttons() == 1) {
@@ -1115,7 +1115,7 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
             turn = 0;
 
             count++;
-            if (count>=2000){//after 1 second, robot drives forward - KL
+            if (count>=1000){//after 1 second, robot drives forward - KL
                 RobotState = 24;
                 count = 0;
             }
@@ -1126,7 +1126,7 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
             setEPWM5B_RCServo(LTong); //KLEC: move the tongue to the left side, green balls go to the right compartment
             setEPWM6A_RCServo(Gate_O); //KLEC: open the gate
             count++;
-            if (count>=3000){
+            if (count>=2000){
                 RobotState = 26;
                 count = 0;
             }
@@ -1178,6 +1178,8 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
             //telling robot to move forward then move to state 36 - KP
             vref = 0.5;
             turn = 0;
+            setEPWM5B_RCServo(RTong);
+            setEPWM6A_RCServo(Gate_O);
             count++;
             if (count>=1000){
                 RobotState = 36;
