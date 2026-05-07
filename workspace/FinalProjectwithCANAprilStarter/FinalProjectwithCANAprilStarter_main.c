@@ -61,6 +61,7 @@ int16_t EPwm1A_F28027 = 1500;
 void setF28027EPWM2A(float controleffort);
 int16_t EPwm2A_F28027 = 1500;
 
+
 // ----- code for CAN start here -----
 // volatile uint32_t txMsgCount = 0;
 // extern uint16_t txMsgData[4];
@@ -295,6 +296,9 @@ float kpvision = -0.07; // vision proportional gain chosen so robot turns toward
 
 int16_t count = 0;
 int16_t statecount = 2000;
+int16_t dwell=0;
+float current= 0.0;
+float target = 0.0;
 
 void main(void)
 {
@@ -474,21 +478,23 @@ void main(void)
     CanbRegs.CAN_GLB_INT_EN.bit.GLBINT0_EN = 1;
     // ----- code for CAN end here -----
 
+    // 58.5 in *  7.5 tiles = 438.75 inches = 11.14425 meters
 
-    robotdest[0].x = -4;    robotdest[0].y = 10;
-    robotdest[1].x = -4;    robotdest[1].y = 2;
+
+    robotdest[0].x = 0;    robotdest[0].y = 11;
+    robotdest[1].x = -8;    robotdest[1].y = 11;
     //middle of bottom
-    robotdest[2].x = 0;     robotdest[2].y = 2;
-    //outside the course
-    robotdest[3].x = 0;     robotdest[3].y = -3;
-    //back to middle
-    robotdest[4].x = 0;     robotdest[4].y = 2;
-    robotdest[5].x = 4;     robotdest[5].y = 2;
-    robotdest[6].x = 4;     robotdest[6].y = 10;
-    robotdest[7].x = 0;     robotdest[7].y = 9;
-    // the two extra points that we added for the robot to go to after the initial course one in the middle of the field and one outside near the wall - ER
-    robotdest[8].x = 2;     robotdest[8].y = 5;
-    robotdest[9].x = -2;    robotdest[9].y = -1;
+    //    robotdest[2].x = 0;     robotdest[2].y = 2;
+    //    //outside the course
+    //    robotdest[3].x = 0;     robotdest[3].y = -3;
+    //    //back to middle
+    //    robotdest[4].x = 0;     robotdest[4].y = 2;
+    //    robotdest[5].x = 4;     robotdest[5].y = 2;
+    //    robotdest[6].x = 4;     robotdest[6].y = 10;
+    //    robotdest[7].x = 0;     robotdest[7].y = 9;
+    //    // the two extra points that we added for the robot to go to after the initial course one in the middle of the field and one outside near the wall - ER
+    //    robotdest[8].x = 2;     robotdest[8].y = 5;
+    //    robotdest[9].x = -2;    robotdest[9].y = -1;
 
     // ROBOTps will be updated by Optitrack during gyro calibration
     // TODO: specify the starting position of the robot
@@ -615,9 +621,9 @@ void main(void)
         if (UARTPrint == 1 ) {
             //UART_printfLine(1,"RCangle:%.2f",RCangle);
             if (readbuttons() == 0) {
-                                UART_printfLine(1,"RobotState: %d", RobotState);
-//                UART_printfLine(1,"O1A:%.0fC:%.0fR:%.0f",MaxAreaThreshold1,MaxColThreshold1,MaxRowThreshold1);
-//                UART_printfLine(2,"P1A:%.0fC:%.0fR:%.0f",MaxAreaThreshold2,MaxColThreshold2,MaxRowThreshold2);
+                UART_printfLine(1,"RobotState: %d", RobotState);
+                //                UART_printfLine(1,"O1A:%.0fC:%.0fR:%.0f",MaxAreaThreshold1,MaxColThreshold1,MaxRowThreshold1);
+                //                UART_printfLine(2,"P1A:%.0fC:%.0fR:%.0f",MaxAreaThreshold2,MaxColThreshold2,MaxRowThreshold2);
                 //                UART_printfLine(1,"x:%.2f:y:%.2f:a%.2f",ROBOTps.x,ROBOTps.y,ROBOTps.theta);
                 UART_printfLine(2,"orange: %.2f", robotToBall2);
             } else if (readbuttons() == 1) {
@@ -1033,6 +1039,8 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
         if( xy_control(&vref, &turn, 1.0, ROBOTps.x, ROBOTps.y, robotdest[statePos].x, robotdest[statePos].y, ROBOTps.theta, 0.25, 0.5)) {
             statePos = (statePos+1)%NUMWAYPOINTS;
         }
+
+        dwell++;
         // state machine
         colcentroid1 = MaxColThreshold1 - 80;
         colcentroid2 = MaxColThreshold2 - 80; // 80 is used as the center column of the camera, so a centered green or orange ball centered gives concentroid = 0 - DS
@@ -1063,6 +1071,15 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
                     RobotState = 30;
                     statecount =0;
                 }
+                if (tagx <= 0.0993) {
+                    if (tagid == 0.0){
+                        RobotState = 40;
+                    }
+                    if (tagid == 1.0){
+                        RobotState = 50;
+                    }
+                }
+
             }
             break;
         case 10: // right wall following if an obstacle gets in the way of robot - KL
@@ -1192,6 +1209,45 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
             turn = 0;
             setEPWM6A_RCServo(Gate_C);
             setEPWM5B_RCServo(MTong);
+            count++;
+            if (count>=1000){
+                RobotState = 1;
+                count = 0;
+                statecount = 0;
+            }
+            break;
+        case 40://code telling the gate to open when it detects april tag 0
+            vref = 0;
+            turn = 0;
+
+            setEPWM6A_RCServo(Gate_O);
+            setEPWM5B_RCServo(0);
+
+            if (dwell >= 2000){
+                setEPWM6A_RCServo(Gate_C);
+            }
+
+            count++;
+            if (count>=1000){
+                RobotState = 1;
+                count = 0;
+                statecount = 0;
+            }
+            break;
+        case 50: //code telling the robot to turn
+
+            vref = 0;
+            count++;
+            if (count>=2000){
+                RobotState = 52;
+                count = 0;
+            }
+            break;
+        case 52:
+            current = ROBOTps.theta;
+            target = PI;
+            turn = fabs(target - current);
+            vref = 1;
             count++;
             if (count>=1000){
                 RobotState = 1;
