@@ -1,5 +1,4 @@
 
-
 import image, sensor, ustruct, pyb, time, display, math
 
 sensor.reset()
@@ -13,8 +12,8 @@ lcd = display.SPIDisplay()
 uart = pyb.UART(3)
 uart.init(115200, bits=8, parity=None)
 threshold1 = (0, 100, -128, -35, -128, 127) # change to a color threshold range
-threshold2 = (39, 90, 32, 127, 14, 127) # change to a color threshold range\
-threshold3 = (24, 53, -1, 47, 12, 38)
+threshold2 = (32, 59, 24, 127, -22, 3) # change to a color threshold range\
+#threshold3 = (24, 53, -1, 47, 12, 38) #Kate's skin color
 # Packets to Send
 blob_packet = '<fff'
 
@@ -59,7 +58,7 @@ while True:
     # half of the 160X120 image.  You can change this to process more or less of the image
     blobs1 = img.find_blobs([threshold1], roi=(0,20,160,100), pixels_threshold=5, area_threshold=15)
     blobs2 = img.find_blobs([threshold2], roi=(0,20,160,100), pixels_threshold=5, area_threshold=15)
-    blobs3 = img.find_blobs([threshold3], roi=(0,20,160,100), pixels_threshold=5, area_threshold=15)
+    #blobs3 = img.find_blobs([threshold3], roi=(0,20,160,100), pixels_threshold=5, area_threshold=15)
 
     if blobs1:
         blob1_sort = sorted(blobs1, key = lambda b: b.pixels(), reverse=True)
@@ -130,44 +129,44 @@ while True:
 
 
     ## KLEC: Dark Purple Color Detection
-    if blobs3:
-        blob3_sort = sorted(blobs3, key = lambda b: b.pixels(), reverse=True)
-        blob3_largest = blob3_sort[:3]
-        blobs3_found = len(blob3_largest)
+    # if blobs3:
+    #     blob3_sort = sorted(blobs3, key = lambda b: b.pixels(), reverse=True)
+    #     blob3_largest = blob3_sort[:3]
+    #     blobs3_found = len(blob3_largest)
 
-        msg = "**".encode()
-        uart.write(msg)
-        for i in range(3):
-            if i < blobs3_found:
-                b = blob3_largest[i]
-                a = float(b.area())
-                x_cnt = float(b.cx())
-                y_cnt = float(b.cy())
-                #print(b.cx(),b.cy())
-                img.draw_rectangle(b[0:4]) # rect on x,y,w,h
-                img.draw_cross(b.cx(), b.cy())
-            else:
-                a = 0.0
-                x_cnt = 0.0
-                y_cnt = 0.0
+    #     msg = "*&".encode()
+    #     uart.write(msg)
+    #     for i in range(3):
+    #         if i < blobs3_found:
+    #             b = blob3_largest[i]
+    #             a = float(b.area())
+    #             x_cnt = float(b.cx())
+    #             y_cnt = float(b.cy())
+    #             #print(b.cx(),b.cy())
+    #             img.draw_rectangle(b[0:4]) # rect on x,y,w,h
+    #             img.draw_cross(b.cx(), b.cy())
+    #         else:
+    #             a = 0.0
+    #             x_cnt = 0.0
+    #             y_cnt = 0.0
 
-            # Send the blob area and centroids over UART
-            b = ustruct.pack(blob_packet, a, x_cnt, y_cnt)
-            uart.write(b)
-    else:  # nothing found
-        msg = "**".encode()
-        uart.write(msg)
-        b = ustruct.pack(blob_packet, 0.0, 0.0, 0.0)
-        uart.write(b)
-        b = ustruct.pack(blob_packet, 0.0, 0.0, 0.0)
-        uart.write(b)
-        b = ustruct.pack(blob_packet, 0.0, 0.0, 0.0)
-        uart.write(b)
+    #         # Send the blob area and centroids over UART
+    #         b = ustruct.pack(blob_packet, a, x_cnt, y_cnt)
+    #         uart.write(b)
+    # else:  # nothing found
+    #     msg = "*&".encode()
+    #     uart.write(msg)
+    #     b = ustruct.pack(blob_packet, 0.0, 0.0, 0.0)
+    #     uart.write(b)
+    #     b = ustruct.pack(blob_packet, 0.0, 0.0, 0.0)
+    #     uart.write(b)
+    #     b = ustruct.pack(blob_packet, 0.0, 0.0, 0.0)
+    #     uart.write(b)
 
 
-    ##############################
+    #####
     tagfound = 0
-    runtag = 0 #set this to 1 if you want to look for april tags
+    runtag = 1 #set this to 1 if you want to look for april tags
     if runtag == 1:
         for tag in img.find_apriltags(
             fx=f_x, fy=f_y, cx=c_x, cy=c_y
@@ -209,5 +208,3 @@ while True:
     #lcd.write(img, roi=(96,80,128,160)) # display the image to lcd only middle 128 cols by 160 rows.
     lcd.write(img, roi=(16,0,128,160))
     print(clock.fps())              # Note: OpenMV Cam runs about half as fast when connected
-
-    
