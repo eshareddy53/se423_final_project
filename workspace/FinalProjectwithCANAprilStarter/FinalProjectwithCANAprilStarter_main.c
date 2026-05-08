@@ -1260,7 +1260,6 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
             break;
         }
 
-
         //Must be called each time into this SWI1 function
         PIcontrol(&uLeft,&uRight,vref,turn,LeftWheel,RightWheel);
         // These below lines also must be called each time into this SWI1 function
