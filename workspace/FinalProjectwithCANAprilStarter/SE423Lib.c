@@ -433,7 +433,7 @@ void init_RCServoPWM_3AB_5AB_6A(void) {
     EPwm6Regs.TBCTL.bit.PHSEN = 0; //disable the phase loading
     EPwm6Regs.TBCTR = 0; //Start the timers at zero.
     EPwm6Regs.TBPRD = 62500;
-    EPwm6Regs.CMPA.bit.CMPA = 5000; //start the duty cycle at 8%.
+    EPwm6Regs.CMPA.bit.CMPA = 4000; //start the duty cycle at 8%.
     EPwm6Regs.AQCTLA.bit.CAU = 1; //set it up such that the signal is cleared when CMPA is reached.
     EPwm6Regs.AQCTLA.bit.ZRO = 2; //Have the pin be set when the TBCTR register is zero
     EPwm6Regs.TBPHS.bit.TBPHS = 0;

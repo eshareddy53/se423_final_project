@@ -122,6 +122,8 @@ extern uint16_t NewCAMDataThreshold1;  // Flag new data
 extern float fromCAMvaluesThreshold1[CAMNUM_FROM_FLOATS];
 extern uint16_t NewCAMDataThreshold2;  // Flag new data
 extern float fromCAMvaluesThreshold2[CAMNUM_FROM_FLOATS];
+extern uint16_t NewCAMDataThreshold3;  // Flag new data
+extern float fromCAMvaluesThreshold3[CAMNUM_FROM_FLOATS];
 
 extern uint16_t NewCAMDataAprilTag1;  // Flag new data
 extern float fromCAMvaluesAprilTag1[CAMNUM_FROM_FLOATS];
@@ -159,8 +161,20 @@ float NextNextLargestAreaThreshold2 = 0;
 float NextNextLargestColThreshold2 = 0;
 float NextNextLargestRowThreshold2 = 0;
 
+//EC
+float MaxAreaThreshold3 = 0;
+float MaxColThreshold3 = 0;
+float MaxRowThreshold3 = 0;
+float NextLargestAreaThreshold3 = 0;
+float NextLargestColThreshold3 = 0;
+float NextLargestRowThreshold3 = 0;
+float NextNextLargestAreaThreshold3 = 0;
+float NextNextLargestColThreshold3 = 0;
+float NextNextLargestRowThreshold3 = 0;
+
 uint32_t numThres1 = 0;
 uint32_t numThres2 = 0;
+uint32_t numThres3 = 0; //EC
 
 pose ROBOTps = {0,0,0}; //robot position
 pose LADARps = {3.5/12.0,0,1};  // 3.5/12 for front mounting, theta is not used in this current code
@@ -287,11 +301,13 @@ uint16_t MPU9250ignoreCNT = 0;  //This is ignoring the first few interrupts if A
 //Added variables to store camera-based ball distances - DS
 float robotToBall2 = 0;
 float robotToBall1 = 0;
+float robotToBall3 = 0;
 
 // angle of the hand encoder - ER
 float RCangle = 0.0;
 float colcentroid1 = 0.0;
 float colcentroid2 = 0.0;
+float colcentriod3 = 0.0;
 float kpvision = -0.07; // vision proportional gain chosen so robot turns toward the ball centroid without overcorrecting - DS
 
 int16_t count = 0;
@@ -481,8 +497,8 @@ void main(void)
     // 58.5 in *  7.5 tiles = 438.75 inches = 11.14425 meters
 
 
-    robotdest[0].x = 0;    robotdest[0].y = 11;
-    robotdest[1].x = -8;    robotdest[1].y = 11;
+    robotdest[0].x = 0;    robotdest[0].y = 8*5;
+    robotdest[1].x = -8*5;    robotdest[1].y = 8*5;
     //middle of bottom
     //    robotdest[2].x = 0;     robotdest[2].y = 2;
     //    //outside the course
@@ -622,10 +638,10 @@ void main(void)
             //UART_printfLine(1,"RCangle:%.2f",RCangle);
             if (readbuttons() == 0) {
                 UART_printfLine(1,"RobotState: %d", RobotState);
-                //                UART_printfLine(1,"O1A:%.0fC:%.0fR:%.0f",MaxAreaThreshold1,MaxColThreshold1,MaxRowThreshold1);
-                //                UART_printfLine(2,"P1A:%.0fC:%.0fR:%.0f",MaxAreaThreshold2,MaxColThreshold2,MaxRowThreshold2);
+//                                UART_printfLine(1,"O1A:%.0fC:%.0fR:%.0f",MaxAreaThreshold1,MaxColThreshold1,MaxRowThreshold1);
+                                UART_printfLine(2,"P1A:%.0fC:%.0fR:%.0f",MaxAreaThreshold2,MaxColThreshold2,MaxRowThreshold2);
                 //                UART_printfLine(1,"x:%.2f:y:%.2f:a%.2f",ROBOTps.x,ROBOTps.y,ROBOTps.theta);
-                UART_printfLine(2,"orange: %.2f", robotToBall2);
+//                UART_printfLine(2,"purple: %.2f", robotToBall2);
             } else if (readbuttons() == 1) {
                 //                UART_printfLine(1,"O1A:%.0fC:%.0fR:%.0f",MaxAreaThreshold1,MaxColThreshold1,MaxRowThreshold1);
                 //                UART_printfLine(2,"P1A:%.0fC:%.0fR:%.0f",MaxAreaThreshold2,MaxColThreshold2,MaxRowThreshold2);
@@ -933,8 +949,16 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
             MaxColThreshold2 = fromCAMvaluesThreshold2[1];
             MaxRowThreshold2 = fromCAMvaluesThreshold2[2];
             // using the calibration values and the line of best fit found from the distance of the green golf ball in relation to the real world, this equation calculates the distance the robot is from the green golf ball in relation to the robot - ER
-            robotToBall2 = -0.00002154*MaxRowThreshold2*MaxRowThreshold2*MaxRowThreshold2 + 0.006486*MaxRowThreshold2*MaxRowThreshold2 - 0.6728*MaxRowThreshold2 + 25.42;
 
+            if (ROBOTps.y < 35){ //first hallway
+                robotToBall2 = -0.00002154*MaxRowThreshold2*MaxRowThreshold2*MaxRowThreshold2 + 0.006486*MaxRowThreshold2*MaxRowThreshold2 - 0.6728*MaxRowThreshold2 + 25.42;
+            }
+            else if (ROBOTps.y >= 35){ //second hallway
+                if (MaxRowThreshold2 > 40)
+                    robotToBall2 = -0.00002154*MaxRowThreshold2*MaxRowThreshold2*MaxRowThreshold2 + 0.006486*MaxRowThreshold2*MaxRowThreshold2 - 0.6728*MaxRowThreshold2 + 25.42;
+                else if (MaxRowThreshold2 <= 40)
+                    robotToBall2 = 0;
+            }
             NextLargestAreaThreshold2 = fromCAMvaluesThreshold2[3];
             NextLargestColThreshold2 = fromCAMvaluesThreshold2[4];
             NextLargestRowThreshold2 = fromCAMvaluesThreshold2[5];
@@ -944,6 +968,27 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
             NextNextLargestRowThreshold2 = fromCAMvaluesThreshold2[8];
             numThres2++;
             if ((numThres2 % 5) == 0) {
+                // LED5 is GPIO111
+                GpioDataRegs.GPDTOGGLE.bit.GPIO111 = 1;
+            }
+        }
+        if (NewCAMDataThreshold3 == 1) {
+            NewCAMDataThreshold3 = 0;
+            MaxAreaThreshold3 = fromCAMvaluesThreshold3[0];
+            MaxColThreshold3 = fromCAMvaluesThreshold3[1];
+            MaxRowThreshold3 = fromCAMvaluesThreshold3[2];
+            // using the calibration values and the line of best fit found from the distance of the green golf ball in relation to the real world, this equation calculates the distance the robot is from the green golf ball in relation to the robot - ER
+            robotToBall3 = -0.00002154*MaxRowThreshold3*MaxRowThreshold3*MaxRowThreshold3 + 0.006486*MaxRowThreshold3*MaxRowThreshold3- 0.6728*MaxRowThreshold3 + 25.42;
+
+            NextLargestAreaThreshold3 = fromCAMvaluesThreshold3[3];
+            NextLargestColThreshold3 = fromCAMvaluesThreshold3[4];
+            NextLargestRowThreshold3 = fromCAMvaluesThreshold3[5];
+
+            NextNextLargestAreaThreshold3 = fromCAMvaluesThreshold3[6];
+            NextNextLargestColThreshold3 = fromCAMvaluesThreshold3[7];
+            NextNextLargestRowThreshold3 = fromCAMvaluesThreshold3[8];
+            numThres3++;
+            if ((numThres3 % 5) == 0) {
                 // LED5 is GPIO111
                 GpioDataRegs.GPDTOGGLE.bit.GPIO111 = 1;
             }
@@ -1044,6 +1089,7 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
         // state machine
         colcentroid1 = MaxColThreshold1 - 80;
         colcentroid2 = MaxColThreshold2 - 80; // 80 is used as the center column of the camera, so a centered green or orange ball centered gives concentroid = 0 - DS
+        colcentriod3 = MaxColThreshold3 - 80;
         switch (RobotState) {
         case 1: // command the robot to an X,Y point in the course - KL
             // vref and turn are the vref and turn returned from xy_control

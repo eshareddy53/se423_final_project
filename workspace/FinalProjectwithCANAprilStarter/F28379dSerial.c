@@ -47,14 +47,22 @@ float checkdist = 0;
 
 uint16_t COMA_state = 0;
 uint16_t COMALSB = 0;
+
 uint16_t received_CAM_countThreshold1 = 0;
 uint16_t NewCAMDataThreshold1 = 0;  // Flag new data
 CAMRecFloats_t DataFromCameraThreshold1;
 float fromCAMvaluesThreshold1[CAMNUM_FROM_FLOATS];
+
 uint16_t received_CAM_countThreshold2 = 0;
 uint16_t NewCAMDataThreshold2 = 0;  // Flag new data
 CAMRecFloats_t DataFromCameraThreshold2;
 float fromCAMvaluesThreshold2[CAMNUM_FROM_FLOATS];
+
+//EC: Declaration added for the third color
+uint16_t received_CAM_countThreshold3 = 0;
+uint16_t NewCAMDataThreshold3 = 0;  // Flag new data
+CAMRecFloats_t DataFromCameraThreshold3;
+float fromCAMvaluesThreshold3[CAMNUM_FROM_FLOATS];
 
 uint16_t received_CAM_countAprilTag1 = 0;
 uint16_t NewCAMDataAprilTag1 = 0;  // Flag new data
@@ -690,6 +698,9 @@ __interrupt void RXAINT_recv_ready(void)
             } else if (RXAdata == '$') {
                 COMA_state = 30; // into the read mode
                 received_CAM_countAprilTag1 = 0;
+            } else if (RXAdata == '&') {
+                COMA_state = 40; //EC: into the read mode
+                received_CAM_countThreshold3 = 0;
             }
             else {
                 COMA_state = 0;
@@ -757,6 +768,27 @@ __interrupt void RXAINT_recv_ready(void)
                 fromCAMvaluesAprilTag1[7] = DataFromCameraAprilTag1.floatData[7];
                 fromCAMvaluesAprilTag1[8] = DataFromCameraAprilTag1.floatData[8];
                 NewCAMDataAprilTag1 = 1;  // Flag new data
+            }
+        } else if (COMA_state == 40) {
+            if ((received_CAM_countThreshold3 % 2) == 0) {
+                COMALSB = RXAdata;
+            } else {
+                DataFromCameraThreshold3.rawData[received_CAM_countThreshold3/2] = (RXAdata << 8) | COMALSB;
+            }
+            received_CAM_countThreshold3++;
+            if (received_CAM_countThreshold3 >= 4*CAMNUM_FROM_FLOATS) {
+                received_CAM_countThreshold3 = 0;
+                COMA_state = 0;
+                fromCAMvaluesThreshold3[0] = DataFromCameraThreshold3.floatData[0];
+                fromCAMvaluesThreshold3[1] = DataFromCameraThreshold3.floatData[1];
+                fromCAMvaluesThreshold3[2] = DataFromCameraThreshold3.floatData[2];
+                fromCAMvaluesThreshold3[3] = DataFromCameraThreshold3.floatData[3];
+                fromCAMvaluesThreshold3[4] = DataFromCameraThreshold3.floatData[4];
+                fromCAMvaluesThreshold3[5] = DataFromCameraThreshold3.floatData[5];
+                fromCAMvaluesThreshold3[6] = DataFromCameraThreshold3.floatData[6];
+                fromCAMvaluesThreshold3[7] = DataFromCameraThreshold3.floatData[7];
+                fromCAMvaluesThreshold3[8] = DataFromCameraThreshold3.floatData[8];
+                NewCAMDataThreshold3 = 1;  // Flag new data
             }
         }
 
