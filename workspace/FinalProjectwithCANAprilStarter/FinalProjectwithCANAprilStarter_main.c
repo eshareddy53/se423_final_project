@@ -497,8 +497,8 @@ void main(void)
     // 58.5 in *  7.5 tiles = 438.75 inches = 11.14425 meters
 
 
-    robotdest[0].x = 0;    robotdest[0].y = 8*5;
-    robotdest[1].x = -8*5;    robotdest[1].y = 8*5;
+    robotdest[0].x = 0;    robotdest[0].y = 7.5 *5;
+    robotdest[1].x = 0*5;    robotdest[1].y = 0*5;
     //middle of bottom
     //    robotdest[2].x = 0;     robotdest[2].y = 2;
     //    //outside the course
@@ -1117,7 +1117,7 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
                     RobotState = 30;
                     statecount =0;
                 }
-                if (tagx <= 0.0993) {
+                if (fabs(tagz) <= 350.468262) {
                     if (tagid == 0.0){
                         RobotState = 40;
                     }
@@ -1291,7 +1291,7 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
             break;
         case 52:
             current = ROBOTps.theta;
-            target = PI;
+            target = 3 * HALFPI;
             turn = fabs(target - current);
             vref = 1;
             count++;
@@ -1660,5 +1660,4 @@ __interrupt void can_isr(void)
     //
     InterruptclearACKGroup(INTERRUPT_ACK_GROUP9);
 }
-// ----- code for CAN end here -----
-
+// ----- code for CAN end here —— 
