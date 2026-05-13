@@ -106,6 +106,8 @@ uint16_t G_len = 11; //length of command
 xy ladar_pts[228]; //xy data
 float LADARrightfront = 0;
 float LADARfront = 0;
+float LADARleftfront = 0;
+
 float LADARtemp_x = 0;
 float LADARtemp_y = 0;
 extern datapts ladar_data[228];
@@ -183,7 +185,7 @@ float LADARyoffset = 0;
 
 uint32_t timecount = 0;
 int16_t RobotState = 1;
-int16_t checkfronttally = 0;
+int32_t checkfronttally = 0;
 int32_t WallFollowtime = 0;
 
 #define NUMWAYPOINTS 10 //Modified NUMWAYPOINTS from 8 to 10 for two extra waypoint targets for the robot path - DS
@@ -201,12 +203,19 @@ float foward_velocity = 1.0;
 float left_turn_Start_threshold = 1.3;
 float turn_saturation = 2.5;
 
+uint16_t left_wall_follow_state = 2; //DS: left wall follow state
+float Kp_left_wal = 4.0;             //DS: opposite sign of right wall follow
+float ref_left_wall = 1.1;           //DS: same desired wall distance as right wall
+float right_turn_Stop_threshold = 3.5;
+float right_turn_Start_threshold = 1.3;
+
 //RC Servo
-float Gate_O = -67.74;
-float Gate_C = 0.40;
+float Gate_O = -60 ;
+float Gate_C = 0 ;
 float RTong = -49.34; //KLEC: ball goes to the left
 float MTong =  -11.49;
 float LTong = 1.47; //KLEC: ball goes to the right
+float dropOffStart = 0;
 
 float x_pred[3][1] = {{0},{0},{0}};                 // predicted state
 
@@ -311,7 +320,7 @@ float colcentriod3 = 0.0;
 float kpvision = -0.07; // vision proportional gain chosen so robot turns toward the ball centroid without overcorrecting - DS
 
 int16_t count = 0;
-int16_t statecount = 2000;
+int32_t statecount = 2000;
 int16_t dwell=0;
 float current= 0.0;
 float target = 0.0;
@@ -497,12 +506,12 @@ void main(void)
     // 58.5 in *  7.5 tiles = 438.75 inches = 11.14425 meters
 
 
-    robotdest[0].x = 0;    robotdest[0].y = 7.5 *5;
-    robotdest[1].x = 0*5;    robotdest[1].y = 0*5;
+    robotdest[0].x = 0;    robotdest[0].y = 8*5;
+    robotdest[1].x = -8*5;    robotdest[1].y = 8*5;
     //middle of bottom
-    //    robotdest[2].x = 0;     robotdest[2].y = 2;
+    robotdest[2].x = 0;     robotdest[2].y = 8*5;
     //    //outside the course
-    //    robotdest[3].x = 0;     robotdest[3].y = -3;
+    robotdest[3].x = 0;     robotdest[3].y = 0;
     //    //back to middle
     //    robotdest[4].x = 0;     robotdest[4].y = 2;
     //    robotdest[5].x = 4;     robotdest[5].y = 2;
@@ -637,11 +646,12 @@ void main(void)
         if (UARTPrint == 1 ) {
             //UART_printfLine(1,"RCangle:%.2f",RCangle);
             if (readbuttons() == 0) {
-                UART_printfLine(1,"RobotState: %d", RobotState);
-//                                UART_printfLine(1,"O1A:%.0fC:%.0fR:%.0f",MaxAreaThreshold1,MaxColThreshold1,MaxRowThreshold1);
-                                UART_printfLine(2,"P1A:%.0fC:%.0fR:%.0f",MaxAreaThreshold2,MaxColThreshold2,MaxRowThreshold2);
+                UART_printfLine(1,"RS: %d TC %ld", RobotState, checkfronttally);
+                //                                UART_printfLine(1,"O1A:%.0fC:%.0fR:%.0f",MaxAreaThreshold1,MaxColThreshold1,MaxRowThreshold1);
+                //                UART_printfLine(2,"P1A:%.0fC:%.0fR:%.0f",MaxAreaThreshold2,MaxColThreshold2,MaxRowThreshold2);
+                UART_printfLine(2, "LF %.2f SC %d", LADARfront, statecount);
                 //                UART_printfLine(1,"x:%.2f:y:%.2f:a%.2f",ROBOTps.x,ROBOTps.y,ROBOTps.theta);
-//                UART_printfLine(2,"purple: %.2f", robotToBall2);
+                //                UART_printfLine(2,"purple: %.2f", robotToBall2);
             } else if (readbuttons() == 1) {
                 //                UART_printfLine(1,"O1A:%.0fC:%.0fR:%.0f",MaxAreaThreshold1,MaxColThreshold1,MaxRowThreshold1);
                 //                UART_printfLine(2,"P1A:%.0fC:%.0fR:%.0f",MaxAreaThreshold2,MaxColThreshold2,MaxRowThreshold2);
@@ -1096,10 +1106,17 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
             if (LADARfront < 1.2) {
                 vref = 0.2;
                 checkfronttally++;
-                if (checkfronttally > 310) { // check if LADARfront < 1.2 for 310ms or 3 LADAR samples
-                    RobotState = 10; // Wall follow
+                //DS: choose the side with more open space for obstacle avoidance
+                if (checkfronttally > 300) {
+                    checkfronttally = 301; // no overflow error
                     WallFollowtime = 0;
-                    right_wall_follow_state = 1;
+                    if (LADARrightfront < LADARleftfront) {
+                        RobotState = 10; //DS: use right-wall following
+                        right_wall_follow_state = 1;
+                    } else {
+                        RobotState = 12; //DS: use left-wall following
+                        left_wall_follow_state = 1;
+                    }
                 }
             } else {
                 checkfronttally = 0;
@@ -1109,6 +1126,8 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
             if (statecount<=2000){
                 RobotState = 1;
             }else{
+                statecount = 2001; // No overflow error
+                count = 0;
                 if (MaxAreaThreshold1 > 30) { // green ball detection threshold chosen so camera noise (image disturbance, not literal) does not trigger chasing rolling ball behavior - DS
                     RobotState = 20;
                     statecount =0;
@@ -1119,7 +1138,7 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
                 }
                 if (fabs(tagz) <= 350.468262) {
                     if (tagid == 0.0){
-                        RobotState = 40;
+                        RobotState = 99; //40;
                     }
                     if (tagid == 1.0){
                         RobotState = 50;
@@ -1155,6 +1174,37 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
             // exit wall following if at least 5 seconds have passed and front path is clear - KL
             if ( (WallFollowtime > 5000) && (LADARfront > 1.5) ) {
                 RobotState = 1; //return to XY waypoint navigation - KL
+                checkfronttally = 0;
+            }
+            break;
+        case 12: //DS: left wall following if an obstacle gets in the way of robot
+            if (left_wall_follow_state == 1) {
+                //DS: Right Turn for left-wall following
+                turn = -Kp_front_wall*(14.5 - LADARfront);
+                vref = front_turn_velocity;
+                if (LADARfront > right_turn_Stop_threshold) {
+                    left_wall_follow_state = 2;
+                }
+            } else if (left_wall_follow_state == 2) {
+                //DS: Left Wall Follow
+                turn = Kp_left_wal*(ref_left_wall - LADARleftfront);
+                vref = foward_velocity;
+                if (LADARfront < right_turn_Start_threshold) {
+                    left_wall_follow_state = 1;
+                }
+            }
+
+            if (turn > turn_saturation) {
+                turn = turn_saturation;
+            }
+            if (turn < -turn_saturation) {
+                turn = -turn_saturation;
+            }
+
+            WallFollowtime++;
+            //DS: exit left-wall following if at least 5 seconds have passed and front path is clear
+            if ( (WallFollowtime > 5000) && (LADARfront > 1.5) ) {
+                RobotState = 1; //DS: return to XY waypoint navigation
                 checkfronttally = 0;
             }
             break;
@@ -1262,45 +1312,79 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
                 statecount = 0;
             }
             break;
-        case 40://code telling the gate to open when it detects april tag 0
-            vref = 0;
-            turn = 0;
-
-            setEPWM6A_RCServo(Gate_O);
-            setEPWM5B_RCServo(0);
-
-            if (dwell >= 2000){
-                setEPWM6A_RCServo(Gate_C);
-            }
-
-            count++;
-            if (count>=1000){
-                RobotState = 1;
-                count = 0;
-                statecount = 0;
-            }
-            break;
+            //        case 40://code telling the gate to open when it detects april tag 0
+            //            vref = 0;
+            //            turn = 0;
+            //
+            //            setEPWM6A_RCServo(Gate_O);
+            //            setEPWM5B_RCServo(0);
+            //
+            //            if (dwell >= 2000){
+            //                setEPWM6A_RCServo(Gate_C);
+            //            }
+            //
+            //            count++;
+            //            if (count>=1000){
+            //                RobotState = 1;
+            //                count = 0;
+            //                statecount = 0;
+            //            }
+            //            break;
         case 50: //code telling the robot to turn
-
             vref = 0;
             count++;
             if (count>=2000){
+                target = ROBOTps.theta + PI;
                 RobotState = 52;
                 count = 0;
             }
             break;
         case 52:
-            current = ROBOTps.theta;
-            target = 3 * HALFPI;
-            turn = fabs(target - current);
-            vref = 1;
+            turn = -(target - ROBOTps.theta);
+            vref = 0;
             count++;
-            if (count>=1000){
+            if (fabs(target - ROBOTps.theta)<(PI/6)){
+                statePos =  3;
                 RobotState = 1;
                 count = 0;
                 statecount = 0;
+                vref = 1.5;
             }
             break;
+        case 99: //robot dispatching the ball // Entering condition: got back to the home April tag location
+            vref = 0;
+            turn = 0;
+
+            count++;
+            //Drop off the color 1 green
+            //EC: Tongue move to left location
+            if (count >= 2000 && count < 4000){
+                setEPWM5B_RCServo(LTong);  //Lift arm
+                setEPWM6A_RCServo(Gate_O);
+                target = ROBOTps.theta + PI;
+            } else if (count <= 7000){ //Back up fast for 3 seconds
+                vref = -0.5;
+            } else if (count <= 11000){
+                vref = 0;
+                setEPWM6A_RCServo(Gate_C);
+                turn = -(target - ROBOTps.theta);
+            } else if(count <= 13000){  //Go forward for 3 seconds
+                vref = 0.5;
+                turn = 0;
+                setEPWM5B_RCServo(RTong);
+            } else if(count <= 15000){ //Drop off the color 2 - red (move tongue to right)
+                vref = 0;
+                setEPWM6A_RCServo(Gate_O);
+            } else if(count <= 19000){
+                vref = -0.5;
+            }
+            else if(count <= 22000){
+                setEPWM6A_RCServo(Gate_C); //Close the arm
+                RobotState = 1;
+                count = 0;
+            }
+            break;
+
 
         default:
             break;
@@ -1392,6 +1476,13 @@ __interrupt void SWI2_MiddlePriority(void)     // RAM_CORRECTABLE_ERROR
                 LADARrightfront = ladar_data[LADARi].distance_ping;
             }
         }
+        //DS: LADARleftfront is the min of dist 170, 171, 172, 173, 174
+        LADARleftfront = 19;
+        for (LADARi = 170; LADARi <= 174; LADARi++) {
+            if (ladar_data[LADARi].distance_ping < LADARleftfront) {
+                LADARleftfront = ladar_data[LADARi].distance_ping;
+            }
+        }
         // LADARfront is the min of dist 111, 112, 113, 114, 115
         LADARfront = 19;
         for (LADARi = 111; LADARi <= 115 ; LADARi++) {
@@ -1413,6 +1504,13 @@ __interrupt void SWI2_MiddlePriority(void)     // RAM_CORRECTABLE_ERROR
         for (LADARi = 52; LADARi <= 56 ; LADARi++) {
             if (ladar_data[LADARi].distance_pong < LADARrightfront) {
                 LADARrightfront = ladar_data[LADARi].distance_pong;
+            }
+        }
+        //DS: LADARleftfront is the min of dist 170, 171, 172, 173, 174
+        LADARleftfront = 19;
+        for (LADARi = 170; LADARi <= 174; LADARi++) {
+            if (ladar_data[LADARi].distance_pong < LADARleftfront) {
+                LADARleftfront = ladar_data[LADARi].distance_pong;
             }
         }
         // LADARfront is the min of dist 111, 112, 113, 114, 115
@@ -1459,8 +1557,8 @@ __interrupt void SWI3_LowestPriority(void)     // FLASH_CORRECTABLE_ERROR
     //    setEPWM3A_RCServo(RCangle); //RCangle is a value from -90 to 90
     //    setEPWM3B_RCServo(RCangle); //RCangle is a value from -90 to 90
     //    setEPWM5A_RCServo(RCangle); //RCangle is a value from -90 to 90 in use
-    setEPWM5B_RCServo(RCangle); //RCangle is a value from -90 to 90 in use - Tongue
-    setEPWM6A_RCServo(RCangle); //RCangle is a value from -90 to 90 in use - Gate
+    //    setEPWM5B_RCServo(RCangle); //RCangle is a value from -90 to 90 in use - Tongue
+    //    setEPWM6A_RCServo(RCangle); //RCangle is a value from -90 to 90 in use - Gate
     //###############################################################################################
     // Insert SWI ISR Code here.......
 
@@ -1660,4 +1758,4 @@ __interrupt void can_isr(void)
     //
     InterruptclearACKGroup(INTERRUPT_ACK_GROUP9);
 }
-// ----- code for CAN end here —— 
+// ----- code for CAN end here ——
