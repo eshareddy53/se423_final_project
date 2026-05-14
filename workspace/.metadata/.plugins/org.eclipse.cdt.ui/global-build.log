@@ -5051,3 +5051,81 @@ gmake[2]: [post-build] Error 2 (ignored)
  
 
 **** Build Finished ****
+
+**** Build of configuration CPU1_FLASH for project FinalProjectwithCANAprilStarter ****
+
+"C:\\ti\\ccs1270\\ccs\\utils\\bin\\gmake" -k -j 12 all -O 
+ 
+gmake[1]: 'FinalProjectwithCANAprilStarter.out' is up to date.
+
+**** Build Finished ****
+
+**** Build of configuration CPU1_FLASH for project FinalProjectwithCANAprilStarter ****
+
+"C:\\ti\\ccs1270\\ccs\\utils\\bin\\gmake" -k -j 12 all -O 
+ 
+gmake[1]: 'FinalProjectwithCANAprilStarter.out' is up to date.
+
+**** Build Finished ****
+
+**** Build of configuration CPU1_FLASH for project FinalProjectwithCANAprilStarter ****
+
+"C:\\ti\\ccs1270\\ccs\\utils\\bin\\gmake" -k -j 12 all -O 
+ 
+gmake[1]: 'FinalProjectwithCANAprilStarter.out' is up to date.
+
+**** Build Finished ****
+
+**** Build of configuration CPU1_FLASH for project FinalProjectwithCANAprilStarter ****
+
+"C:\\ti\\ccs1270\\ccs\\utils\\bin\\gmake" -k -j 12 all -O 
+ 
+Building file: "../FinalProjectwithCANAprilStarter_main.c"
+Invoking: C2000 Compiler
+"C:/ti/ccs1270/ccs/tools/compiler/ti-cgt-c2000_22.6.1.LTS/bin/cl2000" -v28 -ml -mt --cla_support=cla1 --float_support=fpu32 --tmu_support=tmu0 --vcu_support=vcu2 -Ooff --include_path="C:/MARIUS_FINAL_PROJECT/se423_final_project/workspace/FinalProjectwithCANAprilStarter" --include_path="C:/MARIUS_FINAL_PROJECT/se423_final_project/C2000Ware_4_01_00_00/device_support/f2837xd/common/include" --include_path="C:/MARIUS_FINAL_PROJECT/se423_final_project/C2000Ware_4_01_00_00/device_support/f2837xd/headers/include" --include_path="C:/MARIUS_FINAL_PROJECT/se423_final_project/workspace/FinalProjectwithCANAprilStarter/device" --include_path="C:/MARIUS_FINAL_PROJECT/se423_final_project/C2000Ware_4_01_00_00/driverlib/f2837xd/driverlib" --include_path="C:/MARIUS_FINAL_PROJECT/se423_final_project/C2000Ware_4_01_00_00/libraries/dsp/FPU/c28/include" --include_path="C:/ti/ccs1270/ccs/tools/compiler/ti-cgt-c2000_22.6.1.LTS/include" --define=DEBUG --define=_FLASH --define=_LAUNCHXL_F28379D --define=_DUAL_HEADERS --define=CPU1 --c11 --diag_suppress=10063 --diag_warning=225 --diag_wrap=off --display_error_number --abi=coffabi --preproc_with_compile --preproc_dependency="FinalProjectwithCANAprilStarter_main.d_raw"  "../FinalProjectwithCANAprilStarter_main.c"
+"../FinalProjectwithCANAprilStarter_main.c", line 737 (col. 32): advice #2614-D: (Performance) Use --fp_mode=relaxed to enable TMU hardware support for FP division.
+"../FinalProjectwithCANAprilStarter_main.c", line 1048 (col. 23): advice #2614-D: (Performance) Use --fp_mode=relaxed to enable TMU hardware support for cosf.
+"../FinalProjectwithCANAprilStarter_main.c", line 1049 (col. 23): advice #2614-D: (Performance) Use --fp_mode=relaxed to enable TMU hardware support for sinf.
+Finished building: "../FinalProjectwithCANAprilStarter_main.c"
+ 
+Building target: "FinalProjectwithCANAprilStarter.out"
+Invoking: C2000 Linker
+"C:/ti/ccs1270/ccs/tools/compiler/ti-cgt-c2000_22.6.1.LTS/bin/cl2000" -v28 -ml -mt --cla_support=cla1 --float_support=fpu32 --tmu_support=tmu0 --vcu_support=vcu2 -Ooff --define=DEBUG --define=_FLASH --define=_LAUNCHXL_F28379D --define=_DUAL_HEADERS --define=CPU1 --c11 --diag_suppress=10063 --diag_warning=225 --diag_wrap=off --display_error_number --abi=coffabi -z -m"FinalProjectwithCANAprilStarter.map" --stack_size=0x800 --warn_sections -i"C:/ti/ccs1270/ccs/tools/compiler/ti-cgt-c2000_22.6.1.LTS/lib" -i"C:/ti/ccs1270/ccs/tools/compiler/ti-cgt-c2000_22.6.1.LTS/include" --reread_libs --diag_wrap=off --display_error_number --xml_link_info="FinalProjectwithCANAprilStarter_linkInfo.xml" --rom_model -o "FinalProjectwithCANAprilStarter.out" "./F28379dCAN.obj" "./F28379dSerial.obj" "./F2837xD_Adc.obj" "./F2837xD_CodeStartBranch.obj" "./F2837xD_CpuTimers.obj" "./F2837xD_DefaultISR.obj" "./F2837xD_EPwm.obj" "./F2837xD_GlobalVariableDefs.obj" "./F2837xD_Gpio.obj" "./F2837xD_PieCtrl.obj" "./F2837xD_PieVect.obj" "./F2837xD_Spi.obj" "./F2837xD_SysCtrl.obj" "./F2837xD_usDelay.obj" "./FinalProjectwithCANAprilStarter_main.obj" "./MatrixMath.obj" "./OptiTrack.obj" "./SE423Lib.obj" "./user_xy.obj" "./device/device.obj" "../2837xD_FLASH_lnk_cpu1.cmd" "../F2837xD_Headers_nonBIOS_cpu1.cmd" "C:/MARIUS_FINAL_PROJECT/se423_final_project/C2000Ware_4_01_00_00/libraries/dsp/FPU/c28/lib/c28x_fpu_dsp_library.lib" "C:/MARIUS_FINAL_PROJECT/se423_final_project/C2000Ware_4_01_00_00/driverlib/f2837xd/driverlib/ccs/Debug/driverlib.lib"  -llibc.a 
+<Linking>
+Finished building target: "FinalProjectwithCANAprilStarter.out"
+ 
+C:/Program Files/C2Prog 2.x/c2p-cli mkehx --target=28379,378,377,375D-CPU01_SCI FinalProjectwithCANAprilStarter.out FlashIt.ehx
+makefile:176: recipe for target 'post-build' failed
+process_begin: CreateProcess(NULL, C:/Program Files/C2Prog 2.x/c2p-cli mkehx --target=28379,378,377,375D-CPU01_SCI FinalProjectwithCANAprilStarter.out FlashIt.ehx, ...) failed.
+ 
+gmake[2]: [post-build] Error 2 (ignored)
+ 
+
+**** Build Finished ****
+
+**** Build of configuration CPU1_FLASH for project FinalProjectwithCANAprilStarter ****
+
+"C:\\ti\\ccs1270\\ccs\\utils\\bin\\gmake" -k -j 12 all -O 
+ 
+Building file: "../FinalProjectwithCANAprilStarter_main.c"
+Invoking: C2000 Compiler
+"C:/ti/ccs1270/ccs/tools/compiler/ti-cgt-c2000_22.6.1.LTS/bin/cl2000" -v28 -ml -mt --cla_support=cla1 --float_support=fpu32 --tmu_support=tmu0 --vcu_support=vcu2 -Ooff --include_path="C:/MARIUS_FINAL_PROJECT/se423_final_project/workspace/FinalProjectwithCANAprilStarter" --include_path="C:/MARIUS_FINAL_PROJECT/se423_final_project/C2000Ware_4_01_00_00/device_support/f2837xd/common/include" --include_path="C:/MARIUS_FINAL_PROJECT/se423_final_project/C2000Ware_4_01_00_00/device_support/f2837xd/headers/include" --include_path="C:/MARIUS_FINAL_PROJECT/se423_final_project/workspace/FinalProjectwithCANAprilStarter/device" --include_path="C:/MARIUS_FINAL_PROJECT/se423_final_project/C2000Ware_4_01_00_00/driverlib/f2837xd/driverlib" --include_path="C:/MARIUS_FINAL_PROJECT/se423_final_project/C2000Ware_4_01_00_00/libraries/dsp/FPU/c28/include" --include_path="C:/ti/ccs1270/ccs/tools/compiler/ti-cgt-c2000_22.6.1.LTS/include" --define=DEBUG --define=_FLASH --define=_LAUNCHXL_F28379D --define=_DUAL_HEADERS --define=CPU1 --c11 --diag_suppress=10063 --diag_warning=225 --diag_wrap=off --display_error_number --abi=coffabi --preproc_with_compile --preproc_dependency="FinalProjectwithCANAprilStarter_main.d_raw"  "../FinalProjectwithCANAprilStarter_main.c"
+"../FinalProjectwithCANAprilStarter_main.c", line 737 (col. 32): advice #2614-D: (Performance) Use --fp_mode=relaxed to enable TMU hardware support for FP division.
+"../FinalProjectwithCANAprilStarter_main.c", line 1048 (col. 23): advice #2614-D: (Performance) Use --fp_mode=relaxed to enable TMU hardware support for cosf.
+"../FinalProjectwithCANAprilStarter_main.c", line 1049 (col. 23): advice #2614-D: (Performance) Use --fp_mode=relaxed to enable TMU hardware support for sinf.
+Finished building: "../FinalProjectwithCANAprilStarter_main.c"
+ 
+Building target: "FinalProjectwithCANAprilStarter.out"
+Invoking: C2000 Linker
+"C:/ti/ccs1270/ccs/tools/compiler/ti-cgt-c2000_22.6.1.LTS/bin/cl2000" -v28 -ml -mt --cla_support=cla1 --float_support=fpu32 --tmu_support=tmu0 --vcu_support=vcu2 -Ooff --define=DEBUG --define=_FLASH --define=_LAUNCHXL_F28379D --define=_DUAL_HEADERS --define=CPU1 --c11 --diag_suppress=10063 --diag_warning=225 --diag_wrap=off --display_error_number --abi=coffabi -z -m"FinalProjectwithCANAprilStarter.map" --stack_size=0x800 --warn_sections -i"C:/ti/ccs1270/ccs/tools/compiler/ti-cgt-c2000_22.6.1.LTS/lib" -i"C:/ti/ccs1270/ccs/tools/compiler/ti-cgt-c2000_22.6.1.LTS/include" --reread_libs --diag_wrap=off --display_error_number --xml_link_info="FinalProjectwithCANAprilStarter_linkInfo.xml" --rom_model -o "FinalProjectwithCANAprilStarter.out" "./F28379dCAN.obj" "./F28379dSerial.obj" "./F2837xD_Adc.obj" "./F2837xD_CodeStartBranch.obj" "./F2837xD_CpuTimers.obj" "./F2837xD_DefaultISR.obj" "./F2837xD_EPwm.obj" "./F2837xD_GlobalVariableDefs.obj" "./F2837xD_Gpio.obj" "./F2837xD_PieCtrl.obj" "./F2837xD_PieVect.obj" "./F2837xD_Spi.obj" "./F2837xD_SysCtrl.obj" "./F2837xD_usDelay.obj" "./FinalProjectwithCANAprilStarter_main.obj" "./MatrixMath.obj" "./OptiTrack.obj" "./SE423Lib.obj" "./user_xy.obj" "./device/device.obj" "../2837xD_FLASH_lnk_cpu1.cmd" "../F2837xD_Headers_nonBIOS_cpu1.cmd" "C:/MARIUS_FINAL_PROJECT/se423_final_project/C2000Ware_4_01_00_00/libraries/dsp/FPU/c28/lib/c28x_fpu_dsp_library.lib" "C:/MARIUS_FINAL_PROJECT/se423_final_project/C2000Ware_4_01_00_00/driverlib/f2837xd/driverlib/ccs/Debug/driverlib.lib"  -llibc.a 
+<Linking>
+Finished building target: "FinalProjectwithCANAprilStarter.out"
+ 
+C:/Program Files/C2Prog 2.x/c2p-cli mkehx --target=28379,378,377,375D-CPU01_SCI FinalProjectwithCANAprilStarter.out FlashIt.ehx
+makefile:176: recipe for target 'post-build' failed
+process_begin: CreateProcess(NULL, C:/Program Files/C2Prog 2.x/c2p-cli mkehx --target=28379,378,377,375D-CPU01_SCI FinalProjectwithCANAprilStarter.out FlashIt.ehx, ...) failed.
+ 
+gmake[2]: [post-build] Error 2 (ignored)
+ 
+
+**** Build Finished ****

@@ -1322,24 +1322,24 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
                 statecount = 0;
             }
             break;
-//        case 40://code telling the gate to open when it detects april tag 0
-//            vref = 0;
-//            turn = 0;
-//
-//            setEPWM6A_RCServo(Gate_O);
-//            setEPWM5B_RCServo(0);
-//
-//            if (dwell >= 2000){
-//                setEPWM6A_RCServo(Gate_C);
-//            }
-//
-//            count++;
-//            if (count>=1000){
-//                RobotState = 1;
-//                count = 0;
-//                statecount = 0;
-//            }
-//            break;
+            //        case 40://code telling the gate to open when it detects april tag 0
+            //            vref = 0;
+            //            turn = 0;
+            //
+            //            setEPWM6A_RCServo(Gate_O);
+            //            setEPWM5B_RCServo(0);
+            //
+            //            if (dwell >= 2000){
+            //                setEPWM6A_RCServo(Gate_C);
+            //            }
+            //
+            //            count++;
+            //            if (count>=1000){
+            //                RobotState = 1;
+            //                count = 0;
+            //                statecount = 0;
+            //            }
+            //            break;
         case 50: //code telling the robot to turn
             vref = 0;
             count++;
@@ -1362,30 +1362,31 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
             }
             break;
         case 99: //robot dispatching the ball // Entering condition: got back to the home April tag location
+            count++;
             vref = 0;
             turn = 0;
-
-            count++;
             //Drop off the color 1 green
-            //EC: Tongue move to left location
-            if (count >= 2000 && count < 4000){
-                setEPWM5B_RCServo(LTong);  //Lift arm
-                setEPWM6A_RCServo(Gate_O);
+            if (count <= 2000){
+                vref = 0;
+                turn = 0;
+            } else if (count <= 4000){
+                setEPWM5B_RCServo(LTong); //EC: Tongue move to left location
+                setEPWM6A_RCServo(Gate_O); //Lift arm
                 target = ROBOTps.theta + PI;
             } else if (count <= 7000){ //Back up fast for 3 seconds
                 vref = -0.5;
             } else if (count <= 11000){
                 vref = 0;
+                setEPWM5B_RCServo(RTong); //Tongue right
                 setEPWM6A_RCServo(Gate_C);
                 turn = -(target - ROBOTps.theta);
-            } else if(count <= 13000){  //Go forward for 3 seconds
-                vref = 0.5;
+            } else if(count <= 13000){  //Drop off the color 2 - red
+                vref = 0;
                 turn = 0;
-                setEPWM5B_RCServo(RTong);
-            } else if(count <= 15000){ //Drop off the color 2 - red (move tongue to right)
+            } else if(count <= 15000){
                 vref = 0;
                 setEPWM6A_RCServo(Gate_O);
-            } else if(count <= 19000){
+            } else if(count <= 18000){
                 vref = -0.5;
             }
             else if(count <= 22000){
@@ -1769,4 +1770,4 @@ __interrupt void can_isr(void)
     //
     InterruptclearACKGroup(INTERRUPT_ACK_GROUP9);
 }
-// ----- code for CAN end here
+// ----- code for CAN end here----
