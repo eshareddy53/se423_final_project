@@ -4895,3 +4895,6 @@ Unable to communicate with the debug probe. Confirm debug probe configuration an
 Unable to communicate with the debug probe. Confirm debug probe configuration and connections, reset the debug probe, and retry the operation.
 (Emulation package 12.7.0.00105)
 
+
+!ENTRY org.eclipse.core.resources 4 566 2026-05-13 19:11:36.834
+!MESSAGE Workspace was not properly initialized or has already shutdown.
