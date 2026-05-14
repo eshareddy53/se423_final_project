@@ -5,7 +5,7 @@
 	<section name="com.ti.ccstudio.project.ui.internal.properties.DynamicPropertiesPageManager">
 	</section>
 	<section name="com.ti.ccstudio.project.ui.internal.wizards.importexport.ProjectImportPage">
-		<item key="CCS.BROWSE_DIRS_FILTER" value="C:\MARIUS_FINAL_PROJECT\se423_final_project\C2000Ware_4_01_00_00\device_support\f2837xd\examples\cpu1\FinalProjectwithCANAprilStarter"/>
+		<item key="CCS.BROWSE_DIRS_FILTER" value="C:\MARIUS_FINAL_PROJECT\se423_final_project\workspace\FinalProjectwithCANAprilStarter"/>
 		<item key="CCS.COPY_INTO_WORKSPACE" value="false"/>
 		<item key="CCS.IMPORT_REFERENCED_PROJECTS" value="false"/>
 		<item key="CCS.IMPORT_FROM_ARCHIVE" value="false"/>

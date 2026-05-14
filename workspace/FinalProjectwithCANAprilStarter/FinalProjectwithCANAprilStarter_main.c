@@ -188,26 +188,29 @@ int16_t RobotState = 1;
 int32_t checkfronttally = 0;
 int32_t WallFollowtime = 0;
 
-#define NUMWAYPOINTS 10 //Modified NUMWAYPOINTS from 8 to 10 for two extra waypoint targets for the robot path - DS
+#define NUMWAYPOINTS 4 //Modified NUMWAYPOINTS from 8 to 10 for two extra waypoint targets for the robot path - DS
 uint16_t statePos = 0;
 pose robotdest[NUMWAYPOINTS];  // array of waypoints for the robot
 uint16_t i = 0;//for loop
 
 uint16_t right_wall_follow_state = 2;  // right follow
-float Kp_front_wall = -2.0;
+float Kp_front_wall_right = -2.0;
 float front_turn_velocity = 0.2;
-float left_turn_Stop_threshold = 3.5;
+
 float Kp_right_wal = -4.0;
-float ref_right_wall = 1.1;
+float ref_right_wall = 2.0;
 float foward_velocity = 1.0;
-float left_turn_Start_threshold = 1.3;
 float turn_saturation = 2.5;
+float right_turn_Stop_threshold = 3.5;
+float right_turn_Start_threshold = 1.3;
+
 
 uint16_t left_wall_follow_state = 2; //DS: left wall follow state
 float Kp_left_wal = 4.0;             //DS: opposite sign of right wall follow
-float ref_left_wall = 1.1;           //DS: same desired wall distance as right wall
-float right_turn_Stop_threshold = 3.5;
-float right_turn_Start_threshold = 1.3;
+float ref_left_wall = 2.0;           //DS: same desired wall distance as right wall
+float left_turn_Stop_threshold = 3.5;
+float left_turn_Start_threshold = 1.3;
+float Kp_front_wall_left = 2.0;
 
 //RC Servo
 float Gate_O = -60 ;
@@ -319,7 +322,7 @@ float colcentroid2 = 0.0;
 float colcentriod3 = 0.0;
 float kpvision = -0.07; // vision proportional gain chosen so robot turns toward the ball centroid without overcorrecting - DS
 
-int16_t count = 0;
+int32_t count = 0;
 int32_t statecount = 2000;
 int16_t dwell=0;
 float current= 0.0;
@@ -1093,6 +1096,8 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
         // uses xy code to step through an array of positions
         if( xy_control(&vref, &turn, 1.0, ROBOTps.x, ROBOTps.y, robotdest[statePos].x, robotdest[statePos].y, ROBOTps.theta, 0.25, 0.5)) {
             statePos = (statePos+1)%NUMWAYPOINTS;
+
+
         }
 
         dwell++;
@@ -1107,8 +1112,8 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
                 vref = 0.2;
                 checkfronttally++;
                 //DS: choose the side with more open space for obstacle avoidance
-                if (checkfronttally > 300) {
-                    checkfronttally = 301; // no overflow error
+                if (checkfronttally > 500) {
+                    checkfronttally = 501; // no overflow error
                     WallFollowtime = 0;
                     if (LADARrightfront < LADARleftfront) {
                         RobotState = 10; //DS: use right-wall following
@@ -1139,9 +1144,11 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
                 if (fabs(tagz) <= 350.468262) {
                     if (tagid == 0.0){
                         RobotState = 99; //40;
+                        count=0;
                     }
                     if (tagid == 1.0){
                         RobotState = 50;
+                        count=0;
                     }
                 }
 
@@ -1150,7 +1157,7 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
         case 10: // right wall following if an obstacle gets in the way of robot - KL
             if (right_wall_follow_state == 1) {
                 //Left Turn
-                turn = Kp_front_wall*(14.5 - LADARfront);
+                turn = Kp_front_wall_right*(14.5 - LADARfront);
                 vref = front_turn_velocity;
                 if (LADARfront > left_turn_Stop_threshold) {
                     right_wall_follow_state = 2;
@@ -1175,12 +1182,15 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
             if ( (WallFollowtime > 5000) && (LADARfront > 1.5) ) {
                 RobotState = 1; //return to XY waypoint navigation - KL
                 checkfronttally = 0;
+            } else if(ROBOTps.x == 0 && ROBOTps.y == 0.5){
+                RobotState = 88;
+                count = 0;
             }
             break;
         case 12: //DS: left wall following if an obstacle gets in the way of robot
             if (left_wall_follow_state == 1) {
                 //DS: Right Turn for left-wall following
-                turn = -Kp_front_wall*(14.5 - LADARfront);
+                turn = Kp_front_wall_left*(14.5 - LADARfront);
                 vref = front_turn_velocity;
                 if (LADARfront > right_turn_Stop_threshold) {
                     left_wall_follow_state = 2;
@@ -1312,24 +1322,24 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
                 statecount = 0;
             }
             break;
-            //        case 40://code telling the gate to open when it detects april tag 0
-            //            vref = 0;
-            //            turn = 0;
-            //
-            //            setEPWM6A_RCServo(Gate_O);
-            //            setEPWM5B_RCServo(0);
-            //
-            //            if (dwell >= 2000){
-            //                setEPWM6A_RCServo(Gate_C);
-            //            }
-            //
-            //            count++;
-            //            if (count>=1000){
-            //                RobotState = 1;
-            //                count = 0;
-            //                statecount = 0;
-            //            }
-            //            break;
+//        case 40://code telling the gate to open when it detects april tag 0
+//            vref = 0;
+//            turn = 0;
+//
+//            setEPWM6A_RCServo(Gate_O);
+//            setEPWM5B_RCServo(0);
+//
+//            if (dwell >= 2000){
+//                setEPWM6A_RCServo(Gate_C);
+//            }
+//
+//            count++;
+//            if (count>=1000){
+//                RobotState = 1;
+//                count = 0;
+//                statecount = 0;
+//            }
+//            break;
         case 50: //code telling the robot to turn
             vref = 0;
             count++;
@@ -1380,8 +1390,9 @@ __interrupt void SWI1_HighestPriority(void)     // EMIF_ERROR
             }
             else if(count <= 22000){
                 setEPWM6A_RCServo(Gate_C); //Close the arm
-                RobotState = 1;
-                count = 0;
+                vref=0;
+                turn=0;
+
             }
             break;
 
@@ -1478,7 +1489,7 @@ __interrupt void SWI2_MiddlePriority(void)     // RAM_CORRECTABLE_ERROR
         }
         //DS: LADARleftfront is the min of dist 170, 171, 172, 173, 174
         LADARleftfront = 19;
-        for (LADARi = 170; LADARi <= 174; LADARi++) {
+        for (LADARi = 166; LADARi <= 170; LADARi++) {
             if (ladar_data[LADARi].distance_ping < LADARleftfront) {
                 LADARleftfront = ladar_data[LADARi].distance_ping;
             }
@@ -1508,7 +1519,7 @@ __interrupt void SWI2_MiddlePriority(void)     // RAM_CORRECTABLE_ERROR
         }
         //DS: LADARleftfront is the min of dist 170, 171, 172, 173, 174
         LADARleftfront = 19;
-        for (LADARi = 170; LADARi <= 174; LADARi++) {
+        for (LADARi = 166; LADARi <= 170; LADARi++) {
             if (ladar_data[LADARi].distance_pong < LADARleftfront) {
                 LADARleftfront = ladar_data[LADARi].distance_pong;
             }
@@ -1758,4 +1769,4 @@ __interrupt void can_isr(void)
     //
     InterruptclearACKGroup(INTERRUPT_ACK_GROUP9);
 }
-// ----- code for CAN end here ——
+// ----- code for CAN end here

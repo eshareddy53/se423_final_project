@@ -1,7 +1,7 @@
 #define __signed_chars__ 1	/* Predefined */
 #define __PRAGMA_REDEFINE_EXTNAME 1	/* Predefined */
-#define __DATE__ "May  4 2026"	/* Predefined */
-#define __TIME__ "11:22:28"	/* Predefined */
+#define __DATE__ "May 13 2026"	/* Predefined */
+#define __TIME__ "19:00:26"	/* Predefined */
 #define __STDC__ 1	/* Predefined */
 #define __STDC_VERSION__ 201112L	/* Predefined */
 #define __STDC_NO_ATOMICS__ 1	/* Predefined */
